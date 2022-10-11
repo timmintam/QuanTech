@@ -7,16 +7,15 @@ from qiskit_nature.circuit.library import UCCSD, HartreeFock
 from qiskit.circuit.library import EfficientSU2
 from qiskit.algorithms.optimizers import COBYLA, SPSA, SLSQP
 from qiskit import IBMQ, BasicAer, Aer
-from qiskit.utils import QuantumInstance
 from qiskit.utils.mitigation import CompleteMeasFitter
 from qiskit.providers.aer.noise import NoiseModel
+from qiskit.providers.aer import QasmSimulator
+from qiskit import QuantumCircuit, transpile
+from qiskit import Aer
+from qiskit.utils import QuantumInstance
+from qiskit.quantum_info.operators import Operator
 
-#not needed
-#def exact_solver(problem, converter):
-    #solver = NumPyMinimumEigensolverFactory()
-    #calc = GroundStateEigensolver(converter, solver)
-    #result = calc.solve(problem)
-    #return result
+
 
 def exact_solver(problem, converter):
     solver = NumPyMinimumEigensolverFactory()
@@ -32,11 +31,6 @@ def calc_energy(op,num_part,num_orb,problem,converter):
     # and we get an error. 
     result = exact_solver(problem,converter)
 
-    #not needed
-    #distances = np.arange(0.5, 4.0, 0.2)
-    #not needed
-    #exact_energies = []
-    #vqe_energies = []
     optimizer = SLSQP(maxiter=5)
 
         #result = exact_solver(problem,converter)
@@ -52,4 +46,29 @@ def calc_energy(op,num_part,num_orb,problem,converter):
     
     vqe_calc = vqe.compute_minimum_eigenvalue(op)
     vqe_result = problem.interpret(vqe_calc).total_energies[0].real
-    return vqe_result        
+    return vqe_result 
+
+def calc_ground_state(op,num_part,num_orb,problem,converter):
+
+    backend = BasicAer.get_backend("statevector_simulator")
+ 
+    result = exact_solver(problem,converter)
+
+    optimizer = SLSQP(maxiter=5)
+
+    init_state = HartreeFock(num_orb, num_part, converter)
+     
+    var_form = UCCSD(converter,
+                        num_part,
+                        num_orb,
+                        initial_state=init_state)
+
+    vqe = VQE(var_form, optimizer, quantum_instance=backend) 
+    vqe_result = vqe.compute_minimum_eigenvalue(op)
+    min_eng = vqe_result.eigenvalue
+    #vqe_ground = vqe_result.eigenstate perhaps more accurate? Downside: don't get circuit 
+    final_params = vqe_result.optimal_parameters 
+
+    vqe_ground = vqe.ansatz.bind_parameters(final_params)  
+    
+    return vqe_ground, min_eng
