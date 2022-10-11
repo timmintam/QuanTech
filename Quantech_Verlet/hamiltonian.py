@@ -8,6 +8,7 @@ from qiskit_nature.mappers.second_quantization import ParityMapper
 from qiskit.opflow import TwoQubitReduction
 
 
+
 def get_qubit_op(coordinates):
 
     
@@ -15,8 +16,8 @@ def get_qubit_op(coordinates):
     molecule = Molecule(
         # Coordinates in Angstrom
         geometry=[
-            ["Li", [coordinates[0], 0.0, 0.0] ],
-            ["H", [coordinates[1], 0.0, 0.0] ]
+            ["H", coordinates[0]],
+            ["H", coordinates[1]]
         ],
         multiplicity=1,  # = 2*spin + 1
         charge=0,
@@ -35,15 +36,11 @@ def get_qubit_op(coordinates):
     num_spin_orbitals = int(properties
                             .get_property("ParticleNumber")
                             .num_spin_orbitals)
-
-    print("NUM_PARTICLES")
-    print(num_particles)
     
     # Define Problem, Use freeze core approximation, remove orbitals.
     problem = ElectronicStructureProblem(
         driver,
-        [FreezeCoreTransformer(freeze_core=True,
-                               remove_orbitals=[-3,-2])])
+        [FreezeCoreTransformer(freeze_core=True)])
 
     second_q_ops = problem.second_q_ops()  # Get 2nd Quant OP
     num_spin_orbitals = problem.num_spin_orbitals
