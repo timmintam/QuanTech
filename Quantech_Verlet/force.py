@@ -1,5 +1,5 @@
 from hamiltonian import get_qubit_op
-from energy import calc_energy, calc_ground_state
+from energy import calc_ground_state
 import numpy as np
 from qiskit.utils import QuantumInstance
 from qiskit.opflow import PauliExpectation, CircuitSampler, StateFn, CircuitStateFn
@@ -51,10 +51,7 @@ def calc_cov(coordinates):
         new_forces = []
         #transform [[f_x0,f_y0,f_z0],[f_x1,f_y1,f_z1]] to [f_x0,f_y0,f_z0,f_x1,f_y1,f_z1] and append it to force_components
         for j in range(len(forces_i)):
-            if not new_forces:
-                new_forces = forces_i[j]
-            else:
-                new_forces += forces_i[j]
+            new_forces = np.concatenate((new_forces,forces_i[j]),axis=None)
         force_components.append(new_forces)            
 
     #take the transpose of force_components
