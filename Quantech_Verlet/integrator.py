@@ -17,7 +17,7 @@ dt = 0.2*femto
 #initial velocity of atoms
 v_init_0 = np.array([0,0,0])
 v_init_1 = np.array([0,0,0])
-
+#v_init = v_init_0.append(v_init_1)
 #initial positions of atoms
 init_pos = [np.array([0,0,0]),np.array([1,1,1])/np.sqrt(3)]
 
