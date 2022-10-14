@@ -11,7 +11,6 @@ from qiskit.opflow import TwoQubitReduction
 
 def get_qubit_op(coordinates):
 
-    
     # Define Molecule
     molecule = Molecule(
         # Coordinates in Angstrom
@@ -22,7 +21,6 @@ def get_qubit_op(coordinates):
         multiplicity=1,  # = 2*spin + 1
         charge=0,
     )
-
     driver = ElectronicStructureMoleculeDriver(
         molecule=molecule,
         basis="sto3g",
