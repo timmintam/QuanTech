@@ -11,8 +11,6 @@ eV = 1.602e-19
 angst = 1e-10
 dR = 0.002*angst
 
-seed = 50
-
 Ha = 4.36e-18
 angst = 1.0e-10
 
@@ -47,6 +45,7 @@ def calc_cov(coordinates):
     for i in range(0,m):
         #calculate forces for psi_0    
         forces_i = calc_forces(coordinates,psi_0)
+        print(forces_i)
         #temp array
         new_forces = []
         #transform [[f_x0,f_y0,f_z0],[f_x1,f_y1,f_z1]] to [f_x0,f_y0,f_z0,f_x1,f_y1,f_z1] and append it to force_components
@@ -102,7 +101,7 @@ def calc_forces(coordinates, psi = None):
         rep_eng_minus_y = problem_minus_y.grouped_property_transformed.get_property("ElectronicEnergy").nuclear_repulsion_energy
         rep_eng_minus_z = problem_minus_z.grouped_property_transformed.get_property("ElectronicEnergy").nuclear_repulsion_energy
          
-        q_instance = QuantumInstance(backend, shots=1024, seed_transpiler=seed, seed_simulator=seed)
+        q_instance = QuantumInstance(backend, shots=10)
 
         measurable_expression_x = StateFn(Obs_x, is_measurement=True).compose(psi_0)
         measurable_expression_y = StateFn(Obs_y, is_measurement=True).compose(psi_0)
