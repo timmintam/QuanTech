@@ -43,6 +43,7 @@ for time in times:
     r = coords[-1]
     (f0,f1) = calc_forces(coords[-1])
     COV = calc_cov(r)
+    print(COV)
     
     #calculation of force covariance matrix
      
@@ -67,3 +68,4 @@ for time in times:
         coords.append(r_split)
 
     print(distance(coords[-1][0],coords[-1][1]))  
+
