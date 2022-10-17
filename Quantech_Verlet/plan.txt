@@ -1,0 +1,16 @@
+ 1. define molecular structure [PYSCF]
+        https://pyscf.org/user/gto.html
+ 2. compute 1e- and 2e-integrals, Harttree-Fock calculations [PYSCF]
+        https://pyscf.org/pyscf_api_docs/pyscf.gto.html#pyscf.gto.mole.Mole.intor
+        https://pyscf.org/pyscf_api_docs/pyscf.gto.html#module-pyscf.gto.moleintor
+        https://pyscf.org/_modules/pyscf/gto/moleintor.html
+        https://pyscf.org/_modules/pyscf/ao2mo.html
+ 3. define ElectronicIntegrals and ElectronicEnergy from raw np.array [QISKIT]
+        https://qiskit.org/documentation/nature/stubs/qiskit_nature.properties.second_quantization.electronic.integrals.ElectronicIntegrals.html#qiskit_nature.properties.second_quantization.electronic.integrals.ElectronicIntegrals
+        https://qiskit.org/documentation/nature/stubs/qiskit_nature.properties.second_quantization.electronic.ElectronicEnergy.html
+ 4. Jordan-Wigner and Parity maps [QISKIT]
+        https://qiskit.org/documentation/nature/tutorials/01_electronic_structure.html
+ 5. VQE [QISKIT]
+ 6. expectation values of observables [QISKIT]
+ 7. forces [QISKIT]
+
