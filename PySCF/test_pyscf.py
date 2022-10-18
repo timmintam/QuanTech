@@ -1,16 +1,16 @@
 from pyscf import gto, scf, ao2mo
 import numpy as np
 
-coordinates=np.array([0,1])
+coordinates=np.array([0.0,1.0])
 
 # define the molecule
 mol_h2 = gto.M(
-    atom = [['H',(coordinates[0], 0, 0)], 
-            ['H',(coordinates[1], 0, 0)]],
+    atom = [['H',(coordinates[0], 0.0, 0.0)], 
+            ['H',(coordinates[1], 0.0, 0.0)]],
     basis = 'sto3g',
     charge = 0,
     spin = 0,
-    #symmetry = ...,
+    symmetry = true,
 )
 
 '''

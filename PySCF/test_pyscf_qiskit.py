@@ -97,9 +97,6 @@ num_particles = mol_h2.nelec # correct ???
 ##########################################
 num_orb = (mf.mo_coeff).size # correct ???
 ##########################################
-print(num_orb)
-
-# comment : how to freeze the core orbitals ???
 
 mapper = ParityMapper()  # Set Mapper
 print(hamiltonian)
