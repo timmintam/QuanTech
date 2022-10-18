@@ -13,7 +13,11 @@ mol_h2 = gto.M(
     symmetry = False,
 )
 
-mf = scf.RHF(mol_h2).run()
+
+
+mf = scf.RHF(mol_h2)
+mf.frozen = 1
+mf.run()
 
 # computing the 1e and 2e AO (atomic orbitals) integrals 
 
@@ -37,6 +41,11 @@ from qiskit_nature.settings import settings
 settings.dict_aux_operators = True
 
 from qiskit_nature.properties import Property, GroupedProperty
+
+from qiskit_nature.converters.second_quantization import QubitConverter
+from qiskit_nature.mappers.second_quantization import ParityMapper
+from qiskit.opflow import TwoQubitReduction
+
 
 
 
@@ -81,4 +90,24 @@ print(electronic_energy.nuclear_repulsion_energy)
 
 hamiltonian = electronic_energy.second_q_ops()["ElectronicEnergy"]
 print(hamiltonian)
+
+
+##########################################
+num_particles = mol_h2.nelec # correct ???
+##########################################
+num_orb = (mf.mo_coeff).size # correct ???
+##########################################
+print(num_orb)
+
+# comment : how to freeze the core orbitals ???
+
+mapper = ParityMapper()  # Set Mapper
+print(hamiltonian)
+# Do two qubit reduction
+converter = QubitConverter(mapper,two_qubit_reduction=True)
+reducer = TwoQubitReduction(num_particles)
+qubit_op = converter.convert(hamiltonian)
+qubit_op = reducer.convert(qubit_op)
+
+
 
