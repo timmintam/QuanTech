@@ -40,27 +40,12 @@ from qiskit.quantum_info.operators import Operator
 
 
 
-def get_qubit_operators(h2_1e_MO: np.array, h2_2e_MO: np.array, nuc_rep_energy: float, num_particles: int):
-
-    one_body_ints = OneBodyElectronicIntegrals(
-        ElectronicBasis.MO,
-        (
-            h2_1e_MO,None,
-        ),
-    )
-
-    two_body_ints = TwoBodyElectronicIntegrals(
-        ElectronicBasis.MO,
-        (
-            h2_2e_MO, None,None,None,
-        ),
-    )
-
-    electronic_energy = ElectronicEnergy(
-        [one_body_ints, two_body_ints],
-        nuclear_repulsion_energy=nuc_rep_energy,
-        
-    )
+def get_qubit_operators(h2_1e_MO: np.array, h2_2e_MO: np.array, nuc_rep_energy: float, num_particles: tuple):
+    
+    electronic_energy = ElectronicEnergy.from_raw_integrals(
+            ElectronicBasis.MO,h2_1e_MO, h2_2e_MO,
+        )
+    electronic_energy.nuclear_repulsion_energy = nuc_rep_energy
 
     hamiltonian = electronic_energy.second_q_ops()["ElectronicEnergy"]
     print("Electronic part of the Hamiltonian :\n", hamiltonian)
@@ -72,9 +57,9 @@ def get_qubit_operators(h2_1e_MO: np.array, h2_2e_MO: np.array, nuc_rep_energy: 
     mapper = ParityMapper()  # Set Mapper
     # Do two qubit reduction
     converter = QubitConverter(mapper,two_qubit_reduction=True)
-    reducer = TwoQubitReduction(num_particles)
-    qubit_op = converter.convert(hamiltonian)
-    qubit_op = reducer.convert(qubit_op)
+    qubit_op = converter.convert_only(hamiltonian, num_particles)
+    print("q_op :\n", qubit_op)
+   
 
     return qubit_op, converter
 
@@ -89,8 +74,9 @@ def calc_ground_state(op,num_part,num_orb,converter):
     #result = exact_solver(problem,converter)
 
     optimizer = SLSQP(maxiter=5)
-
+    
     init_state = HartreeFock(num_orb, num_part, converter)
+    print(init_state) # WHY DOES IT INITIALIZE A STATE WITH 4 QUBITS ??? INSTEAD OF 2...
      
     var_form = UCCSD(converter,
                         num_part,
