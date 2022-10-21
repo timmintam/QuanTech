@@ -1,32 +1,26 @@
 import numpy as np
 from molecular_integrals import get_molecular_integrals
-from qubit_operators import get_qubit_operators, calc_ground_state
 from pyscf_qiskit import QiskitNaturePySCFSolver
 
-"""
-from qiskit_nature.algorithms.ground_state_solvers import GroundStateEigensolver
-from qiskit_nature.algorithms.minimum_eigensolvers import NumPyMinimumEigensolver
-
-from qiskit_nature.algorithms import (GroundStateEigensolver,
-                                      NumPyMinimumEigensolverFactory)
-
-from qiskit_nature.converters.second_quantization import QubitConverter
-from qiskit_nature.mappers.second_quantization import ParityMapper
-"""
-
 coordinates=np.array([1.0])
-h2_1e_MO, h2_2e_MO, nuc_rep_energy, num_particles, num_orb = get_molecular_integrals(coordinates)
-print(num_particles)
-qubit_op, converter = get_qubit_operators(h2_1e_MO, h2_2e_MO, nuc_rep_energy, num_particles)
-print("Qubit operators :\n",qubit_op)
-vqe_ground, min_eng = calc_ground_state(qubit_op,num_particles,num_orb,converter)
-print(min_eng)
+dR=np.array([0.1])
+
+solver = QiskitNaturePySCFSolver()
+
+# Option 1:
+#h1_MO, h2_MO, num_orb, num_particles, nuc_rep_energy = get_molecular_integrals(coordinates)
+#solver.kernel(h2_1e_MO, h2_2e_MO, num_orb, num_particles, nuc_rep_energy)
+
+# Option 2:
+H_0 = solver.kernel(*get_molecular_integrals(coordinates))
+
+vqe_ground, min_eng = solver.calc_ground_state()
+print(f'Ground state preparation circuit : \n{vqe_ground}')
+print(f'Ground energy : {min_eng}')
 
 
-
-#mapper = ParityMapper()  # Set Mapper
-# Do two qubit reduction
-#converter = QubitConverter(mapper,two_qubit_reduction=True)
-#numpy_solver = NumPyMinimumEigensolverFactory()
-#GSE = GroundStateEigensolver(converter, numpy_solver)
-#solver= QiskitNaturePySCFSolver(GSE)
+H_plus  = solver.kernel(*get_molecular_integrals(coordinates+dR))
+H_minus = solver.kernel(*get_molecular_integrals(coordinates-dR))
+print(f'\n\nCompare \n\n{(H_plus-H_minus)}\n\n versus \n\n{(H_plus-H_minus).reduce()}')
+obs=(H_plus-H_minus).reduce()
+print(obs.primitive.to_list())

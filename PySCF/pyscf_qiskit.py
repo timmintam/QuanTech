@@ -1,98 +1,117 @@
-# This code is part of Qiskit.
-#
-# (C) Copyright IBM 2022.
-#
-# This code is licensed under the Apache License, Version 2.0. You may
-# obtain a copy of this license in the LICENSE.txt file in the root directory
-# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-#
-# Any modifications or derivative works of this code must retain this
-# copyright notice, and modified files need to carry a notice indicating
-# that they have been altered from the originals.
+import numpy as np
 
-from pyscf import ao2mo, gto, scf
+from pyscf import ao2mo
 
-
-#from qiskit_nature.algorithms.ground_state_solvers import GroundStateEigensolvers
-#from qiskit_nature.algorithms.minimum_eigensolvers import NumPyMinimumEigensolver
-
-from qiskit_nature.algorithms import (GroundStateEigensolver,
-                                      NumPyMinimumEigensolverFactory)
-
-from qiskit_nature.properties.second_quantization.electronic import (
-    ElectronicEnergy,
-    ParticleNumber,
-    #ElectronicDensity
-)
-from qiskit_nature.problems.second_quantization import ElectronicStructureProblem
-
-"""
-from qiskit_nature.second_q.algorithms import (
-    GroundStateEigensolver,
-    NumPyMinimumEigensolverFactory,
-)
+from typing import Tuple
 
 from qiskit_nature.second_q.hamiltonians import ElectronicEnergy
+from qiskit_nature.second_q.mappers import ParityMapper, QubitConverter
 from qiskit_nature.second_q.problems import ElectronicStructureProblem
-from qiskit_nature.second_q.properties import (
-    ElectronicDensity,
-    ParticleNumber,
-)
-"""
+from qiskit_nature.second_q.properties import ParticleNumber
+from qiskit_nature.second_q.transformers import FreezeCoreTransformer
+from qiskit_nature.second_q.circuit.library import UCCSD, HartreeFock
+from qiskit_nature.second_q.problems import ElectronicBasis
+from qiskit_nature.second_q.formats.molecule_info import MoleculeInfo
+
+from qiskit.algorithms import VQE
+from qiskit.algorithms.optimizers import SLSQP
+from qiskit import BasicAer
+from qiskit import QuantumCircuit
+from qiskit.quantum_info.operators import Operator
 
 class QiskitNaturePySCFSolver:
-    def __init__(self, solver: GroundStateEigensolver):
-        #self.density: ElectronicDensity = None
-        self.solver = solver
-
-    def kernel(self, h1, h2, norb, nelec, ecore=0, **kwargs):
-        hamiltonian = ElectronicEnergy.from_raw_integrals(
-            h1, ao2mo.restore(1, h2, norb)
-        )
-        hamiltonian.nuclear_repulsion_energy = ecore
-        problem = ElectronicStructureProblem(hamiltonian)
-        problem.num_spatial_orbitals = norb
-        problem.num_particles = nelec
-        #if self.density is None:
-        #    self.density = ElectronicDensity.from_orbital_occupation(
-        #        problem.orbital_occupations,
-        #        problem.orbital_occupations_b,
-        #    )
-        problem.properties.particle_number = ParticleNumber(norb)
-        problem.properties.electronic_density = self.density
-
-        self.result = self.solver.solve(problem)
-        #self.density = self.result.electronic_density
-
-        e_tot = self.result.total_energies[0]
-        return e_tot, self
-    
-    def get_qubit_ops():
-        return 0
+    def __init__(self,
+                 #molecule: MoleculeInfo
+    ):
         
+        #self.molecule = molecule
+        self.qubit_op  = None
+        self.converter = None
+        self.norb = None
+        self.nelec = None
 
-    """
-    def make_rdm1(self, fake_ci, norb, nelec):
-        return fake_ci.density.trace_spin()["+-"]
 
-    def make_rdm12(self, fake_ci, norb, nelec):
-        traced = fake_ci.density.trace_spin()
-        return (traced["+-"], _phys_to_chem(traced["++--"]))
-    """
 
-"""
-if __name__ == "__main__":
-    mol = gto.M(atom="H 0 0 0; H 0 0 0.735", basis="631g*", spin=0, verbose=4)
-    mf = scf.RHF(mol).run()
-    norb = 2
-    nelec = 2
-    mc = mcscf.CASCI(mf, norb, nelec)
+    
+    def kernel(self, 
+               h1_MO: np.array,
+               h2_MO: np.array, 
+               norb: int,
+               nelec: Tuple[int, int],
+               #coords: Sequence[tuple[float, float, float]],
+               ecore: float = 0.0,
+               **kwargs
+    ) -> Operator:
+        
+        self.norb = norb
+        self.nelec = nelec
 
-    solver = GroundStateEigensolver(
-        QubitConverter(JordanWignerMapper()),
-        NumPyMinimumEigensolverFactory(),
-    )
+        # Define an ElectronicEnergy instance containing the 1e and 2e integrals
+        electronic_energy = ElectronicEnergy.from_raw_integrals(
+                h1_MO, ao2mo.restore(1, h2_MO, self.norb)
+            )
+        electronic_energy.nuclear_repulsion_energy = ecore
 
-    mc.fcisolver = QiskitNaturePySCFFCISolver(solver)
-    mc.run()
-"""
+        # Define an ElectronicStructureProblem
+        problem = ElectronicStructureProblem(electronic_energy)
+
+        second_q_ops = problem.second_q_ops()     # get second quantized operators
+        problem.num_spatial_orbitals = self.norb  # define number of orbitals
+        problem.num_particles = self.nelec        # define number of particles 
+        
+        problem.basis=ElectronicBasis.MO # 1e and 2e integrals are expected to be given in the Molecular Orbitals basis
+        # comment : raise error if h1 and h2 not in MO basis ? how to check ? add argument to pass the basis ?
+        
+        """ 
+        problem.molecule=MoleculeInfo(symbols=('H','H'), coords=((0.0, 0.0, 0.0),(1.0, 0.0, 0.0)) )
+        print(problem.molecule)
+        FC_transformer=FreezeCoreTransformer(freeze_core=True)
+        problem = FC_transformer.transform(problem)
+        """
+        # we need to give info about the molecule to use FreezeCoreTransformer 
+        # question : how to do it in a smart way ? at the initialization ??
+        
+        hamiltonian=second_q_ops[0]  # Set Hamiltonian
+        #print("Electronic part of the Hamiltonian :\n", hamiltonian) # print for checking purposes
+        
+        mapper = ParityMapper()  # Set Mapper
+        
+        # Do two qubit reduction
+        converter = QubitConverter(mapper,two_qubit_reduction=True)
+        qubit_op = converter.convert(hamiltonian, self.nelec)
+        #print("q_op :\n", qubit_op) # print for checking purposes
+        
+        self.qubit_op  = qubit_op
+        self.converter = converter
+    
+        return qubit_op
+        
+    
+
+    def calc_ground_state(self) -> Tuple[QuantumCircuit, complex] :
+        
+        # question : vqe_ground is of type QuantumCircuit right ?
+        # raise error if kernel has not been called previously
+        
+        backend = BasicAer.get_backend("statevector_simulator")
+        optimizer = SLSQP(maxiter=5)
+        
+        init_state = HartreeFock(num_spatial_orbitals=self.norb, 
+                                 num_particles=self.nelec, 
+                                 qubit_converter=self.converter
+                                )
+        
+        var_form = UCCSD(qubit_converter=self.converter,
+                         num_particles=self.nelec,
+                         num_spatial_orbitals=self.norb, 
+                         initial_state=init_state
+                         )
+
+        vqe = VQE(var_form, optimizer, quantum_instance=backend) 
+        vqe_result = vqe.compute_minimum_eigenvalue(self.qubit_op)
+        min_eng = vqe_result.eigenvalue
+        final_params = vqe_result.optimal_parameters 
+
+        vqe_ground = vqe.ansatz.bind_parameters(final_params)  
+        
+        return vqe_ground, min_eng
