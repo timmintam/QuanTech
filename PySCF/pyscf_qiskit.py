@@ -60,7 +60,7 @@ class QiskitNaturePySCFSolver:
         problem.num_particles = self.nelec        # define number of particles 
         
         problem.basis=ElectronicBasis.MO # 1e and 2e integrals are expected to be given in the Molecular Orbitals basis
-        # comment : raise error if h1 and h2 not in MO basis ? how to check ? add argument to pass the basis ?
+        # TODO raise error if h1 and h2 not in MO basis ? how to check ? add argument to pass the basis ?
         
         """ 
         problem.molecule=MoleculeInfo(symbols=('H','H'), coords=((0.0, 0.0, 0.0),(1.0, 0.0, 0.0)) )
@@ -68,10 +68,11 @@ class QiskitNaturePySCFSolver:
         FC_transformer=FreezeCoreTransformer(freeze_core=True)
         problem = FC_transformer.transform(problem)
         """
-        # we need to give info about the molecule to use FreezeCoreTransformer 
+        # TODO we need to give info about the molecule to use FreezeCoreTransformer 
         # question : how to do it in a smart way ? at the initialization ??
         
         hamiltonian=second_q_ops[0]  # Set Hamiltonian
+        # TODO add nuclear repulsion energy to the hamiltonian 
         #print("Electronic part of the Hamiltonian :\n", hamiltonian) # print for checking purposes
         
         mapper = ParityMapper()  # Set Mapper
@@ -91,7 +92,7 @@ class QiskitNaturePySCFSolver:
     def calc_ground_state(self) -> Tuple[QuantumCircuit, complex] :
         
         # question : vqe_ground is of type QuantumCircuit right ?
-        # raise error if kernel has not been called previously
+        # TODO raise error if kernel has not been called previously
         
         backend = BasicAer.get_backend("statevector_simulator")
         optimizer = SLSQP(maxiter=5)
