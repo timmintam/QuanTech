@@ -7,6 +7,7 @@ from typing import Tuple
 from qiskit_nature.second_q.hamiltonians import ElectronicEnergy
 from qiskit_nature.second_q.mappers import ParityMapper, QubitConverter
 from qiskit_nature.second_q.problems import ElectronicStructureProblem
+from qiskit_nature.second_q.operators import FermionicOp
 from qiskit_nature.second_q.properties import ParticleNumber
 from qiskit_nature.second_q.transformers import FreezeCoreTransformer
 from qiskit_nature.second_q.circuit.library import UCCSD, HartreeFock
@@ -59,7 +60,7 @@ class QiskitNaturePySCFSolver:
         problem.num_spatial_orbitals = self.norb  # define number of orbitals
         problem.num_particles = self.nelec        # define number of particles 
         
-        problem.basis=ElectronicBasis.MO # 1e and 2e integrals are expected to be given in the Molecular Orbitals basis
+        problem.basis = ElectronicBasis.MO # 1e and 2e integrals are expected to be given in the Molecular Orbitals basis
         # TODO raise error if h1 and h2 not in MO basis ? how to check ? add argument to pass the basis ?
         
         """ 
@@ -71,9 +72,9 @@ class QiskitNaturePySCFSolver:
         # TODO we need to give info about the molecule to use FreezeCoreTransformer 
         # question : how to do it in a smart way ? at the initialization ??
         
-        hamiltonian=second_q_ops[0]  # Set Hamiltonian
-        # TODO add nuclear repulsion energy to the hamiltonian 
-        #print("Electronic part of the Hamiltonian :\n", hamiltonian) # print for checking purposes
+        hamiltonian = second_q_ops[0]  # Set electronic part of Hamiltonian
+        hamiltonian = (hamiltonian + FermionicOp({"": ecore}, num_spin_orbitals=self.norb)) # add Nuclear Repulsion Energy
+        #print("Hamiltonian :\n", hamiltonian) # print for checking purposes
         
         mapper = ParityMapper()  # Set Mapper
         
