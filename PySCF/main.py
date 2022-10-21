@@ -14,6 +14,9 @@ solver = QiskitNaturePySCFSolver()
 # Option 2:
 H_0 = solver.kernel(*get_molecular_integrals(coordinates))
 
+# Option 3:
+# TODO define a Results structure
+
 vqe_ground, min_eng = solver.calc_ground_state()
 print(f'Ground state preparation circuit : \n{vqe_ground}')
 print(f'Ground energy : {min_eng}')
