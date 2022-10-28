@@ -9,7 +9,7 @@ solver = QiskitNaturePySCFSolver()
 
 # Option 1:
 #h1_MO, h2_MO, num_orb, num_particles, nuc_rep_energy = get_molecular_integrals(coordinates)
-#solver.kernel(h2_1e_MO, h2_2e_MO, num_orb, num_particles, nuc_rep_energy)
+#H_0 = solver.kernel(h2_1e_MO, h2_2e_MO, num_orb, num_particles, nuc_rep_energy)
 
 # Option 2:
 H_0 = solver.kernel(*get_molecular_integrals(coordinates))
@@ -27,3 +27,4 @@ H_minus = solver.kernel(*get_molecular_integrals(coordinates-dR))
 print(f'\n\nCompare \n\n{(H_plus-H_minus)}\n\n versus \n\n{(H_plus-H_minus).reduce()}')
 obs=(H_plus-H_minus).reduce()
 print(obs.primitive.to_list())
+print((obs.compose(obs)).reduce().primitive.to_list())
