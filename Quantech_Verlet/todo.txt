@@ -1,0 +1,6 @@
+TODO list :
+    add noise model
+    optimize delta factor for thermalization time
+    qubit reduction for H3+
+    running on real backend
+    implement accelerated scheme
